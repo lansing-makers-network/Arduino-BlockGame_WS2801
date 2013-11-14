@@ -39,12 +39,16 @@ RGB LEDS data is on pin 1
 #include <avr/io.h>
 #include <avr/pgmspace.h>
 
-//Constants on how it's physically wired
-#define LEDDATAPIN 2
-#define LEDCLKPIN 3
+//Constants for LED strip.  Hardware SPI can be used by commenting out these defines.
+//#define LEDDATAPIN 2
+//#define LEDCLKPIN 3
 
-#define COL_GAP 0
-#define LEDS 200
+//Strips are assumed to be zig-zagged horizontally by default. Uncomment VERT_STRIPS to reverse this behavior
+//#define VERT_STRIPS
+
+#define    FIELD_WIDTH 10
+#define    FIELD_HEIGHT 20
+#define    LEDS FIELD_HEIGHT * FIELD_WIDTH
 
 //constants and initialization
 #define UP  0
@@ -58,8 +62,6 @@ RGB LEDS data is on pin 1
 #define OFF 0
 
 //Display Settings
-#define    FIELD_WIDTH 10
-#define    FIELD_HEIGHT 20
 //const short    field_start_x    = 1;
 //const short    field_start_y    = 1;
 //const short           preview_start_x    = 13;
@@ -136,6 +138,17 @@ static PROGMEM prog_uint8_t brick_colors[brick_count]={
 //You will need to modify this to translate fro x,y to a pixel number.
 uint16_t computeAddress(int row, int col){
 	uint16_t reversed = 0;
+#ifdef VERT_STIPRS
+	if col%2 == ) {
+		reversed = 1;
+	}
+	uint16_t base = (col*FIELD_HEIGHT);
+	if (reversed) {
+		base += FIELD_HEIGHT - 1;
+	}
+	uint16_t final = reverse == 1? base - row: base + row;
+	}
+#else
 	if (row%2 == 0){
 		reversed = 1;
 	}
@@ -144,6 +157,7 @@ uint16_t computeAddress(int row, int col){
 		base += FIELD_WIDTH -1;
 	}
 	uint16_t final = reversed == 1 ? base - col: base + col;
+#endif
 	return final;
 }
 
@@ -195,20 +209,21 @@ WiiChuck chuck = WiiChuck();
 
 // Define the RGB pixel array and controller functions, 
 //Adafruit_NeoPixel strip = Adafruit_NeoPixel(LEDS, LEDDATAPIN, NEO_GRB + NEO_KHZ800);
-//Adafruit_WS2801 strip = Adafruit_WS2801(LEDS, LEDDATAPIN, LEDCLKPIN);
+#ifdef LEDCLKPIN
+Adafruit_WS2801 strip = Adafruit_WS2801(LEDS, LEDDATAPIN, LEDCLKPIN);
+#else
 Adafruit_WS2801 strip = Adafruit_WS2801(LEDS);
+#endif
+
 
 
 void setup(){
 
-  pinMode(LEDDATAPIN, OUTPUT); //LED on Model B 
-  pinMode(13, OUTPUT);
   Serial.begin(115200); 
   strip.begin();
   chuck.begin();
   chuck.update();
   newGame();
-
 
 }
 
