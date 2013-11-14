@@ -40,11 +40,11 @@ RGB LEDS data is on pin 1
 #include <avr/pgmspace.h>
 
 //Constants on how it's physically wired
-#define LEDDATAPIN 6
-#define LEDCLKPIN 4
+#define LEDDATAPIN 2
+#define LEDCLKPIN 3
 
 #define COL_GAP 0
-#define LEDS 100
+#define LEDS 200
 
 //constants and initialization
 #define UP  0
@@ -59,7 +59,7 @@ RGB LEDS data is on pin 1
 
 //Display Settings
 #define    FIELD_WIDTH 10
-#define    FIELD_HEIGHT 10
+#define    FIELD_HEIGHT 20
 //const short    field_start_x    = 1;
 //const short    field_start_y    = 1;
 //const short           preview_start_x    = 13;
@@ -136,14 +136,14 @@ static PROGMEM prog_uint8_t brick_colors[brick_count]={
 //You will need to modify this to translate fro x,y to a pixel number.
 uint16_t computeAddress(int row, int col){
 	uint16_t reversed = 0;
-	if (col%2 == 0){
+	if (row%2 == 0){
 		reversed = 1;
 	}
-	uint16_t base = (col)*FIELD_HEIGHT + (col*COL_GAP);
+	uint16_t base = (row)*FIELD_WIDTH;
 	if (reversed) {
-		base += FIELD_HEIGHT -1;
+		base += FIELD_WIDTH -1;
 	}
-	uint16_t final = reversed == 1 ? base - row: base + row;
+	uint16_t final = reversed == 1 ? base - col: base + col;
 	return final;
 }
 
@@ -195,7 +195,8 @@ WiiChuck chuck = WiiChuck();
 
 // Define the RGB pixel array and controller functions, 
 //Adafruit_NeoPixel strip = Adafruit_NeoPixel(LEDS, LEDDATAPIN, NEO_GRB + NEO_KHZ800);
-Adafruit_WS2801 strip = Adafruit_WS2801(LEDS, LEDDATAPIN, LEDCLKPIN);
+//Adafruit_WS2801 strip = Adafruit_WS2801(LEDS, LEDDATAPIN, LEDCLKPIN);
+Adafruit_WS2801 strip = Adafruit_WS2801(LEDS);
 
 
 void setup(){
@@ -203,6 +204,7 @@ void setup(){
   pinMode(LEDDATAPIN, OUTPUT); //LED on Model B 
   pinMode(13, OUTPUT);
   Serial.begin(115200); 
+  strip.begin();
   chuck.begin();
   chuck.update();
   newGame();
@@ -293,10 +295,10 @@ else{
     
   }
     //pulse onbaord LED and delay game
-  digitalWrite(13, HIGH);   
-  delay(tick_delay);               
-  digitalWrite(13, LOW);    
-  delay(tick_delay);  
+  //digitalWrite(13, HIGH);   
+  //delay(tick_delay);               
+  //digitalWrite(13, LOW);    
+  //delay(tick_delay);  
   
   }
   }
