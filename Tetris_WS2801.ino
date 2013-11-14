@@ -250,11 +250,9 @@ void screenTest(){
 //plays the game!
 void play(){
 
-  //see how high the wall goes, end game early to save battery power
-  if(getHighestColumn() > 9)
-    newGame();
   
   
+
 if(currentBrick.positionY < 2){
     moveDown();
   //pulse onbaord LED and delay game
