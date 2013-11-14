@@ -139,10 +139,10 @@ static PROGMEM prog_uint8_t brick_colors[brick_count]={
 uint16_t computeAddress(int row, int col){
 	uint16_t reversed = 0;
 #ifdef VERT_STRIPS
-	if col%2 == ) {
+	if (col%2 == 0) {
 		reversed = 1;
 	}
-	uint16_t base = (col*FIELD_HEIGHT);
+	uint16_t base = (col)*FIELD_HEIGHT;
 	if (reversed) {
 		base += FIELD_HEIGHT - 1;
 	}
