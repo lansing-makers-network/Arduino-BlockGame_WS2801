@@ -69,14 +69,16 @@ RGB LEDS data is on pin 1
 //const short    delimeter_x      = 11;
 //gameplay Settings
 //const bool    display_preview    = 1;
-#define tick_delay 100 //game speed
+#define tick_delay 400 //game speed
 #define max_level 9
-
+#define bounce_delay 200
 //weight given to the highest column for ai
 #define HIGH_COLUMN_WEIGHT 5
 //weight given to the number of holes for ai
 #define HOLE_WEIGHT 3
 
+unsigned long  next_tick = 0;
+unsigned long bounce_tick = 0;
 static PROGMEM prog_uint16_t bricks[ brick_count ][4] = {
   {
     0b0100010001000100,      //1x4 cyan
@@ -160,7 +162,6 @@ uint16_t computeAddress(int row, int col){
 #endif
 	return final;
 }
-
 
 /*const unsigned short level_ticks_timeout[ max_level ]  = {
 32,
@@ -249,76 +250,38 @@ void screenTest(){
 
 //plays the game!
 void play(){
+	if(aiCalculatedAlready == false) {
+		performAI();
+	}
 
-  
-  
-
-if(currentBrick.positionY < 2){
-    moveDown();
-  //pulse onbaord LED and delay game
-  digitalWrite(13, HIGH);   
-  delay(tick_delay);               
-  digitalWrite(13, LOW);    
-  delay(tick_delay);  
+	if (millis() > bounce_tick) {
+		byte command = getCommand();
+		if ( command != 4 ) {
+			bounce_tick = millis() + bounce_delay;
+		}
+		if ( command == UP ) {
+			if ( checkRotate( 1 ) == true ) {
+				rotate( 1 );
+			}
+		} else if ( command == RIGHT ) {
+			if ( checkShift( -1, 0 ) == true ) {
+				shift( -1, 0 );
+			}
+		} else if ( command == LEFT ) {
+			if ( checkShift( 1, 0 ) == true ) {
+				shift( 1, 0 );
+			}
+		} else if ( command == DOWN ) {
+			moveDown();
+		}
+	}
+	if ( millis() > next_tick ) {
+		next_tick = millis()+tick_delay;
+		moveDown();
+	}
+	drawGame();
 }
-else{
-  //this flag gets set after calculating the AI move
-  //and reset after we get the nextbrick in the nextBrick call
-  if(aiCalculatedAlready == false)
-  {
-    performAI();
-  }
-  else
-  {
-    byte command = getCommand();
-      if( command == UP )
-  {
-    if( checkRotate( 1 ) == true )
-    {
-      rotate( 1 );
-      moveDown();
-    }
-    else
-    moveDown();
-  }
-  else if( command == LEFT )
-  {
-    if( checkShift( -1, 0 ) == true )
-    {
-      shift( -1, 0 );
-      moveDown();
-    }
-    else
-    moveDown();
-  }
-  else if( command == RIGHT )
-  {
-    if( checkShift( 1, 0 ) == true )
-    {
-      shift( 1, 0 );
-      moveDown();
-    }
-    else
-    moveDown();
-  }
 
-  if(command == DOWN )
-  {
-    moveDown();
-    
-  }
-    //pulse onbaord LED and delay game
-  //digitalWrite(13, HIGH);   
-  //delay(tick_delay);               
-  //digitalWrite(13, LOW);    
-  //delay(tick_delay);  
-  
-  }
-  }
-  drawGame();
-
-    
-}
 
 //performs AI player calculations. 
 void performAI(){
@@ -498,18 +461,20 @@ byte getCommand(){
     return DOWN;
     */
     
-  byte playerMove = DOWN;
+  byte playerMove = 4;
   chuck.update(); 
 
   int x = chuck.readJoyX();
   int y = chuck.readJoyY();
   if (chuck.buttonC) {
     Serial.println("Button C pushed.");
-     if (useAi){
-        useAi = false;
-      } else {
-        useAi = true;
-      }
+     useAi = !useAi;
+     if (useAi) {
+    	 setToColor(255, 0, 0);
+     } else {
+    	 setToColor(0, 255, 0);
+     }
+     strip.show();
       delay(250);
   }
  
@@ -517,9 +482,9 @@ byte getCommand(){
     if(currentBrick.rotation != aiCurrentMove.rotation)
       return UP;
     if(currentBrick.positionX > aiCurrentMove.positionX)
-      return LEFT;
-    if(currentBrick.positionX < aiCurrentMove.positionX)
       return RIGHT;
+    if(currentBrick.positionX < aiCurrentMove.positionX)
+      return LEFT;
     if(currentBrick.positionX == aiCurrentMove.positionX)
       return DOWN;
   }
@@ -979,4 +944,11 @@ void updateDisplay(){
   strip.show();
   
   
+}
+
+void setToColor(int r, int g, int b) {
+	int i;
+	for (i=0; i < strip.numPixels(); i++) {
+		strip.setPixelColor(i, r, g, b);
+	}
 }
