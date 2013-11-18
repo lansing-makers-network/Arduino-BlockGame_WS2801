@@ -71,7 +71,7 @@ RGB LEDS data is on pin 1
 //const bool    display_preview    = 1;
 #define tick_delay 400 //game speed
 #define max_level 9
-#define bounce_delay 200
+#define bounce_delay 50
 //weight given to the highest column for ai
 #define HIGH_COLUMN_WEIGHT 5
 //weight given to the number of holes for ai
@@ -249,30 +249,54 @@ void screenTest(){
 }
 
 //plays the game!
+// globals, sorry (@RCK)
+int ct = 0;
 void play(){
+	ct++; // increment our tick counter
 	if(aiCalculatedAlready == false) {
 		performAI();
 	}
 
 	if (millis() > bounce_tick) {
 		byte command = getCommand();
+
 		if ( command != 4 ) {
 			bounce_tick = millis() + bounce_delay;
 		}
-		if ( command == UP ) {
-			if ( checkRotate( 1 ) == true ) {
-				rotate( 1 );
+		/* To account for an oversensitive thumbstick,
+		   we want to introduce a timer that prevents
+		   commands from being processed too frequently. @RCK */
+
+		// if we're not on the AI, and there is a real command
+		// but < 7 loops have gone by, pretend it didn't happen.
+		if (!useAi && command < 4 && ct < 7) {
+			Serial.print("SKIPPED");
+			Serial.println(ct);
+		} else { // ok, we can process this command.
+
+			// reset the tick counter if it's a command
+			if (command < 4)
+				ct = 0;
+
+			// process the command
+			if ( command == UP ) {
+				bounce_tick = millis() + bounce_delay*5;
+				if ( checkRotate( 1 ) == true ) {
+					rotate( 1 );
+				}
+			} else if ( command == RIGHT ) {
+				if ( checkShift( -1, 0 ) == true ) {
+					Serial.println("SHIFT RIGHT");
+					shift( -1, 0 );
+				}
+			} else if ( command == LEFT ) {
+				if ( checkShift( 1, 0 ) == true ) {
+					Serial.println("SHIFT LEFT");
+					shift( 1, 0 );
+				}
+			} else if ( command == DOWN ) {
+				moveDown();
 			}
-		} else if ( command == RIGHT ) {
-			if ( checkShift( -1, 0 ) == true ) {
-				shift( -1, 0 );
-			}
-		} else if ( command == LEFT ) {
-			if ( checkShift( 1, 0 ) == true ) {
-				shift( 1, 0 );
-			}
-		} else if ( command == DOWN ) {
-			moveDown();
 		}
 	}
 	if ( millis() > next_tick ) {
@@ -470,9 +494,9 @@ byte getCommand(){
     Serial.println("Button C pushed.");
      useAi = !useAi;
      if (useAi) {
-    	 setToColor(255, 0, 0);
+    	 colorGrid(Color(255, 0, 0));
      } else {
-    	 setToColor(0, 255, 0);
+    	 colorGrid(Color(0, 255, 0));
      }
      strip.show();
       delay(250);
@@ -509,6 +533,7 @@ byte getCommand(){
     Serial.println(")");
     playerMove = DOWN;
   }
+  chuck.update();
   return playerMove;
     
     
@@ -905,23 +930,20 @@ void draw(byte color, signed int brightness, byte x, byte y){
 //obvious function
 void gameOver()
 {
-  /*  
-Serial.println( "Game Over." );
 
-Serial.print( "Level:\t");
-Serial.println( level );
+  int y;
+  for ( y = 0; y < FIELD_HEIGHT; y++ ) {
+	  colorRow(Color(255, 0, 0), y);
+	  strip.show();
+	  delay(80);
+  }
+  fadeGrid(Color(255, 0, 0), Color(255,255,255),0, 100);
+  fadeGrid(Color(255,255,255), Color(0,0,0), 8, 200);
+  delay(1500);
+  //dissolveGrid(5, 250);
 
-Serial.print( "Lines:\t" );
-Serial.println( score_lines );
-
-Serial.print( "Score:\t");
-Serial.println( score );
-Serial.println();
-
-Serial.println("Insert coin to continue");
-waitForInput();
-*/
   newGame();
+
 }
 
 //clean up, reset timers, scores, etc. and start a new round.
@@ -945,10 +967,56 @@ void updateDisplay(){
   
   
 }
-
-void setToColor(int r, int g, int b) {
+uint32_t Color(byte r, byte g, byte b) {
+	uint32_t c;
+	c = r;
+	c <<= 8;
+	c |= g;
+	c <<= 8;
+	c |= b;
+	return c;
+}
+void colorGrid(uint32_t color) {
 	int i;
 	for (i=0; i < strip.numPixels(); i++) {
-		strip.setPixelColor(i, r, g, b);
+		strip.setPixelColor(i, color);
+	}
+}
+
+void colorRow(uint32_t color, int row) {
+	int x;
+
+	for ( x = 0; x < FIELD_WIDTH; x++ ) {
+		strip.setPixelColor(computeAddress(row, x), color);
+	}
+}
+
+void fadeGrid(uint32_t s_color, uint32_t e_color, uint16_t pause, float steps) {
+	float s_color_r = (( s_color >> 16 ) & 0xFF);
+	float s_color_g = (( s_color >> 8 ) & 0xFF);
+	float s_color_b = ( s_color & 0xFF );
+
+	float e_color_r = (( e_color >> 16 ) & 0xFF);
+	float e_color_g = (( e_color >> 8 ) & 0xFF);
+	float e_color_b = ( e_color & 0xFF );
+	uint32_t currentColor = s_color;
+	long i;
+	for ( i = 0; i <= steps; i++) {
+		//currentColor = map(i, 0, steps, min(s_color, e_color), max(s_color, e_color) );
+		//colorGrid(currentColor);
+
+		Serial.println((s_color_r + ((e_color_r - s_color_r) / steps)*i));
+		colorGrid(Color((s_color_r + ((e_color_r - s_color_r) / steps)*i),(s_color_g + ((e_color_g - s_color_g) / steps)*i),(s_color_b + ((e_color_b - s_color_b) / steps)*i)));
+		strip.show();
+		delay(pause);
+	}
+}
+
+void dissolveGrid(uint16_t pause, uint16_t steps) {
+	int i;
+	for (i = 0; i<steps; i++) {
+		strip.setPixelColor(random(0, strip.numPixels()), 0);
+		strip.show();
+		delay(pause);
 	}
 }
