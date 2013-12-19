@@ -222,6 +222,14 @@ void setup(){
 
   Serial.begin(115200); 
   strip.begin();
+
+  //Pre-Operating Self Test of LED grid.
+  fadeGrid(Color(0,0,0), Color(255,0,0), 8, 50);   // fade from off to Red
+  fadeGrid(Color(255,0,0), Color(0,255,0), 8, 50); // fade from Red to Green
+  fadeGrid(Color(0,255,0), Color(0,0,255), 8, 50); // fade from Green to Blue
+  fadeGrid(Color(0,0,255), Color(0,0,0), 8, 50);   // fade from Blue to Off
+  Serial.print(F("POST Finished"));
+
   chuck.begin();
   chuck.update();
   newGame();
