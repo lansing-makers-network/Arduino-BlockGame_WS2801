@@ -278,7 +278,7 @@ void play(){
 		// if we're not on the AI, and there is a real command
 		// but < 7 loops have gone by, pretend it didn't happen.
 		if (!useAi && command < 4 && ct < 7) {
-			Serial.print("SKIPPED");
+			Serial.print(F("SKIPPED"));
 			Serial.println(ct);
 		} else { // ok, we can process this command.
 
@@ -294,12 +294,12 @@ void play(){
 				}
 			} else if ( command == RIGHT ) {
 				if ( checkShift( -1, 0 ) == true ) {
-					Serial.println("SHIFT RIGHT");
+					Serial.println(F("SHIFT RIGHT"));
 					shift( -1, 0 );
 				}
 			} else if ( command == LEFT ) {
 				if ( checkShift( 1, 0 ) == true ) {
-					Serial.println("SHIFT LEFT");
+					Serial.println(F("SHIFT LEFT"));
 					shift( 1, 0 );
 				}
 			} else if ( command == DOWN ) {
@@ -436,7 +436,7 @@ int getHighestColumn(){
       {
         columnHeight = FIELD_HEIGHT - k;
         //Serial.print(k);
-        //Serial.println(" is k");
+        //Serial.println(F(" is k"));
         //delay(100);
       }
     }
@@ -499,7 +499,7 @@ byte getCommand(){
   int x = chuck.readJoyX();
   int y = chuck.readJoyY();
   if (chuck.buttonC) {
-    Serial.println("Button C pushed.");
+    Serial.println(F("Button C pushed."));
      useAi = !useAi;
      if (useAi) {
     	 colorGrid(Color(255, 0, 0));
@@ -523,22 +523,22 @@ byte getCommand(){
  
  
   if (chuck.buttonZ){
-    Serial.println("Button Z pushed.");
+    Serial.println(F("Button Z pushed."));
     playerMove = UP;
   } else if (x > 75){
-    Serial.print("RIGHT: Joy X > 75.(");
+    Serial.print(F("RIGHT: Joy X > 75.("));
     Serial.print(x);
-    Serial.println(")");
+    Serial.println(F(")"));
     playerMove = RIGHT;
   } else if (x < -75){
-    Serial.print("LEFT: Joy X < -75.(");
+    Serial.print(F("LEFT: Joy X < -75.("));
     Serial.print(x);
-    Serial.println(")");
+    Serial.println(F(")"));
     playerMove = LEFT;
   } else if ( y < -75 ){
-    Serial.print("DOWN: Joy Y < -75.(");
+    Serial.print(F("DOWN: Joy Y < -75.("));
     Serial.print(y);
-    Serial.println(")");
+    Serial.println(F(")"));
     playerMove = DOWN;
   }
   chuck.update();
