@@ -216,20 +216,31 @@ Adafruit_WS2801 strip = Adafruit_WS2801(LEDS, LEDDATAPIN, LEDCLKPIN);
 Adafruit_WS2801 strip = Adafruit_WS2801(LEDS);
 #endif
 
-
+int idleBricks = 0;
+#define MAX_IDLEBRICKS 4
 
 void setup(){
 
   Serial.begin(115200); 
+  Serial.println(F("Starting Arduino Tetris"));
+
   strip.begin();
 
   //Pre-Operating Self Test of LED grid.
+  Serial.println(F("Starting Pre Operating Self Test"));
+  Serial.println(F("fade to Red"));
   fadeGrid(Color(0,0,0), Color(255,0,0), 8, 50);   // fade from off to Red
+  Serial.println(F("fade to Green"));
   fadeGrid(Color(255,0,0), Color(0,255,0), 8, 50); // fade from Red to Green
+  Serial.println(F("fade to Blue"));
   fadeGrid(Color(0,255,0), Color(0,0,255), 8, 50); // fade from Green to Blue
+  Serial.println(F("fade to off"));
   fadeGrid(Color(0,0,255), Color(0,0,0), 8, 50);   // fade from Blue to Off
-  Serial.print(F("POST Finished"));
+  Serial.println(F("Pre Operating Self Test Finished"));
 
+  Serial.print(F("useAI mode = ")); 
+  Serial.println(useAi); 
+  
   chuck.begin();
   chuck.update();
   newGame();
@@ -501,13 +512,16 @@ byte getCommand(){
   if (chuck.buttonC) {
     Serial.println(F("Button C pushed."));
      useAi = !useAi;
+     Serial.println(F("Toggling useAI mode"));
      if (useAi) {
     	 colorGrid(Color(255, 0, 0));
+       Serial.println(F("useAI mode enabled"));
      } else {
     	 colorGrid(Color(0, 255, 0));
+       Serial.println(F("useAI mode disabled"));
      }
      strip.show();
-      delay(250);
+     delay(250);
   }
  
   if (chuck.buttonZ){
@@ -530,9 +544,16 @@ byte getCommand(){
     playerMove = DOWN;
   }
 
+  if (playerMove < 4) {
+    idleBricks = 0;
+    Serial.println(F("resetting the idle manual brick count to zero"));
+  }
+  
   if (useAi){
     if (playerMove < 4) {
       useAi = !useAi;
+      Serial.println(F("Toggling useAI mode OFF!"));
+      idleBricks = 0;
     } else {
       if(currentBrick.rotation != aiCurrentMove.rotation)
         playerMove = UP;
@@ -547,7 +568,6 @@ byte getCommand(){
 
   chuck.update();
   return playerMove;
-    
     
 }
 
@@ -800,6 +820,20 @@ bool clearLine()
 
 //randomly selects a new brick and resets rotation / position.
 void nextBrick(){
+
+  if (!useAi) {
+    idleBricks++;
+    if (idleBricks > MAX_IDLEBRICKS) {
+      useAi = !useAi;
+      Serial.print(F("MAX_IDLEBRICKS of ")); 
+      Serial.print(MAX_IDLEBRICKS); 
+      Serial.println(F(" exceeded")); 
+      Serial.println(F("Swithing to AI mode!")); 
+      idleBricks = 0;
+    }
+    Serial.print(F("idle manual bricks = ")); 
+    Serial.println(idleBricks);
+  }
   currentBrick.rotation = 0;
   currentBrick.positionX = round(FIELD_WIDTH / 2) - 2;
   currentBrick.positionY = -3;
@@ -1017,7 +1051,7 @@ void fadeGrid(uint32_t s_color, uint32_t e_color, uint16_t pause, float steps) {
 		//currentColor = map(i, 0, steps, min(s_color, e_color), max(s_color, e_color) );
 		//colorGrid(currentColor);
 
-		Serial.println((s_color_r + ((e_color_r - s_color_r) / steps)*i));
+		//Serial.println((s_color_r + ((e_color_r - s_color_r) / steps)*i));
 		colorGrid(Color((s_color_r + ((e_color_r - s_color_r) / steps)*i),(s_color_g + ((e_color_g - s_color_g) / steps)*i),(s_color_b + ((e_color_b - s_color_b) / steps)*i)));
 		strip.show();
 		delay(pause);
