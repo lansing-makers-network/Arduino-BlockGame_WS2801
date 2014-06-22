@@ -510,18 +510,6 @@ byte getCommand(){
       delay(250);
   }
  
-  if (useAi){
-    if(currentBrick.rotation != aiCurrentMove.rotation)
-      return UP;
-    if(currentBrick.positionX > aiCurrentMove.positionX)
-      return RIGHT;
-    if(currentBrick.positionX < aiCurrentMove.positionX)
-      return LEFT;
-    if(currentBrick.positionX == aiCurrentMove.positionX)
-      return DOWN;
-  }
- 
- 
   if (chuck.buttonZ){
     Serial.println(F("Button Z pushed."));
     playerMove = UP;
@@ -541,6 +529,22 @@ byte getCommand(){
     Serial.println(F(")"));
     playerMove = DOWN;
   }
+
+  if (useAi){
+    if (playerMove < 4) {
+      useAi = !useAi;
+    } else {
+      if(currentBrick.rotation != aiCurrentMove.rotation)
+        playerMove = UP;
+      if(currentBrick.positionX > aiCurrentMove.positionX)
+        playerMove = RIGHT;
+      if(currentBrick.positionX < aiCurrentMove.positionX)
+        playerMove = LEFT;
+      if(currentBrick.positionX == aiCurrentMove.positionX)
+        playerMove = DOWN;
+    }
+  }
+
   chuck.update();
   return playerMove;
     
