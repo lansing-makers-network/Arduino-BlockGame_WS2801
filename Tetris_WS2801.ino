@@ -276,6 +276,7 @@ void play(){
 		performAI();
 	}
 
+
 	if (millis() > bounce_tick) {
 		byte command = getCommand();
 
@@ -528,20 +529,20 @@ byte getCommand(){
     Serial.println(F("Button Z pushed."));
     playerMove = UP;
   } else if (x > 75){
-    Serial.print(F("RIGHT: Joy X > 75.("));
-    Serial.print(x);
-    Serial.println(F(")"));
-    playerMove = RIGHT;
-  } else if (x < -75){
-    Serial.print(F("LEFT: Joy X < -75.("));
-    Serial.print(x);
-    Serial.println(F(")"));
-    playerMove = LEFT;
-  } else if ( y < -75 ){
-    Serial.print(F("DOWN: Joy Y < -75.("));
-    Serial.print(y);
-    Serial.println(F(")"));
-    playerMove = DOWN;
+      Serial.print(F("RIGHT: Joy X > 75.("));
+      Serial.print(x);
+      Serial.println(F(")"));
+      playerMove = RIGHT;
+    } else if (x < -75){
+      Serial.print(F("LEFT: Joy X < -75.("));
+      Serial.print(x);
+      Serial.println(F(")"));
+      playerMove = LEFT;
+    } else if ( y < -75 ){
+      Serial.print(F("DOWN: Joy Y < -75.("));
+      Serial.print(y);
+      Serial.println(F(")"));
+      playerMove = DOWN;
   }
 
   if (playerMove < 4) {
@@ -565,6 +566,9 @@ byte getCommand(){
         playerMove = DOWN;
     }
   }
+
+
+
 
   chuck.update();
   return playerMove;
@@ -697,8 +701,11 @@ void rotate( bool direction )
 void moveDown(){
   if( checkGround() )
   {
+
     addToWall();
+
     drawGame();
+    
     if( checkCeiling() )
     {
       gameOver();
@@ -996,11 +1003,13 @@ void gameOver()
 void newGame()
 {
 
+  aiCalculatedAlready = false;
   //  level = 0;
   // ticks = 0;
   //score = 0;
   //score_lines = 0;
   //last_key = 0;
+  bounce_tick = millis() + bounce_delay;
   clearWall();
 
   nextBrick();
