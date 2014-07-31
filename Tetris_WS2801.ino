@@ -528,7 +528,8 @@ byte getCommand(){
   if (chuck.buttonZ){
     Serial.println(F("Button Z pushed."));
     playerMove = UP;
-  } else if (x > 75){
+  } else if ((x != -DEFAULT_ZERO_JOY_X) && (y != -DEFAULT_ZERO_JOY_Y)) {
+    if (x > 75){
       Serial.print(F("RIGHT: Joy X > 75.("));
       Serial.print(x);
       Serial.println(F(")"));
@@ -543,6 +544,7 @@ byte getCommand(){
       Serial.print(y);
       Serial.println(F(")"));
       playerMove = DOWN;
+    }
   }
 
   if (playerMove < 4) {
