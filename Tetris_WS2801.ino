@@ -79,7 +79,7 @@ RGB LEDS data is on pin 1
 
 unsigned long  next_tick = 0;
 unsigned long bounce_tick = 0;
-static PROGMEM prog_uint16_t bricks[ brick_count ][4] = {
+const PROGMEM uint16_t bricks[ brick_count ][4] = {
   {
     0b0100010001000100,      //1x4 cyan
     0b0000000011110000,
@@ -126,7 +126,7 @@ static PROGMEM prog_uint16_t bricks[ brick_count ][4] = {
 
 //8 bit RGB colors of blocks
 //RRRGGGBB
-static PROGMEM prog_uint8_t brick_colors[brick_count]={
+const PROGMEM uint8_t brick_colors[brick_count]={
   0b00011111, //cyan
   0b10000010, //purple
   0b11111100, //yellow
