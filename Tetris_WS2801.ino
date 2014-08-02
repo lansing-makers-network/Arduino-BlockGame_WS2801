@@ -78,7 +78,7 @@ RGB LEDS data is on pin 1
 
 unsigned long  next_tick = 0;
 unsigned long bounce_tick = 0;
-static PROGMEM prog_uint16_t bricks[ brick_count ][4] = {
+const PROGMEM uint16_t bricks[ brick_count ][4] = {
   {
     0b0100010001000100,      //1x4 cyan
     0b0000000011110000,
@@ -125,7 +125,7 @@ static PROGMEM prog_uint16_t bricks[ brick_count ][4] = {
 
 //8 bit RGB colors of blocks
 //RRRBBBGG
-static PROGMEM prog_uint8_t brick_colors[brick_count]={
+const PROGMEM uint8_t brick_colors[brick_count]={
   0b00011111, //cyan
   0b10010000, //purple
   0b11100011, //yellow
@@ -273,6 +273,7 @@ void play(){
 	if(aiCalculatedAlready == false) {
 		performAI();
 	}
+
 
 	if (millis() > bounce_tick) {
 		byte command = getCommand();
@@ -525,21 +526,23 @@ byte getCommand(){
   if (chuck.buttonZ){
     Serial.println(F("Button Z pushed."));
     playerMove = UP;
-  } else if (x > 75){
-    Serial.print(F("RIGHT: Joy X > 75.("));
-    Serial.print(x);
-    Serial.println(F(")"));
-    playerMove = RIGHT;
-  } else if (x < -75){
-    Serial.print(F("LEFT: Joy X < -75.("));
-    Serial.print(x);
-    Serial.println(F(")"));
-    playerMove = LEFT;
-  } else if ( y < -75 ){
-    Serial.print(F("DOWN: Joy Y < -75.("));
-    Serial.print(y);
-    Serial.println(F(")"));
-    playerMove = DOWN;
+  } else if ((x != -DEFAULT_ZERO_JOY_X) && (y != -DEFAULT_ZERO_JOY_Y)) {
+    if (x > 75){
+      Serial.print(F("RIGHT: Joy X > 75.("));
+      Serial.print(x);
+      Serial.println(F(")"));
+      playerMove = RIGHT;
+    } else if (x < -75){
+      Serial.print(F("LEFT: Joy X < -75.("));
+      Serial.print(x);
+      Serial.println(F(")"));
+      playerMove = LEFT;
+    } else if ( y < -75 ){
+      Serial.print(F("DOWN: Joy Y < -75.("));
+      Serial.print(y);
+      Serial.println(F(")"));
+      playerMove = DOWN;
+    }
   }
 
   if (playerMove < 4) {
@@ -563,6 +566,9 @@ byte getCommand(){
         playerMove = DOWN;
     }
   }
+
+
+
 
   chuck.update();
   return playerMove;
@@ -695,8 +701,11 @@ void rotate( bool direction )
 void moveDown(){
   if( checkGround() )
   {
+
     addToWall();
+
     drawGame();
+    
     if( checkCeiling() )
     {
       gameOver();
@@ -994,11 +1003,13 @@ void gameOver()
 void newGame()
 {
 
+  aiCalculatedAlready = false;
   //  level = 0;
   // ticks = 0;
   //score = 0;
   //score_lines = 0;
   //last_key = 0;
+  bounce_tick = millis() + bounce_delay;
   clearWall();
 
   nextBrick();
