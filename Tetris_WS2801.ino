@@ -1,4 +1,3 @@
-
 /*
 *
 * BASED ON:
@@ -125,16 +124,15 @@ static PROGMEM prog_uint16_t bricks[ brick_count ][4] = {
 };
 
 //8 bit RGB colors of blocks
-//RRRGGGBB
+//RRRBBBGG
 static PROGMEM prog_uint8_t brick_colors[brick_count]={
   0b00011111, //cyan
-  0b10000010, //purple
-  0b11111100, //yellow
-  0b11101000, //orange?
-  0b00000011, //blue
-  0b00011100, //green
-  0b11100000 //red
-  
+  0b10010000, //purple
+  0b11100011, //yellow
+  0b11100001, //orange?
+  0b00011100, //blue
+  0b00000011, //green
+  0b11100000  //red
 };
 
 //You will need to modify this to translate fro x,y to a pixel number.
