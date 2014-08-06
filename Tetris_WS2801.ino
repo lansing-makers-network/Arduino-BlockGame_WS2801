@@ -905,8 +905,10 @@ void nextBrick(){
 	Serial.print(F("numberOfBricksInGame = "));
 	Serial.println(numberOfBricksInGame);
 	
-	if (numberOfBricksInGame > addExtraBrickCount) {
-          brick_count = sizeof(bricks)/sizeof(bricks[0]); 
+	if ((numberOfBricksInGame > addExtraBrickCount) && !useAi) {
+    brick_count = sizeof(bricks)/sizeof(bricks[0]); 
+	} else {
+    brick_count = sizeof(bricks)/sizeof(bricks[0]) - 1; 
 	}
 
   if (!useAi) {
