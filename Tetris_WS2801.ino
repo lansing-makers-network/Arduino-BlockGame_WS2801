@@ -57,7 +57,6 @@ RGB LEDS data is on pin 1
 #define LEFT  3
 #define CLOCKWISE 4
 #define NUMBEROFMOVES 5
-#define brick_count 7
 
 #define FULL 128
 #define WHITE 0xFF
@@ -81,7 +80,7 @@ RGB LEDS data is on pin 1
 
 unsigned long  next_tick = 0;
 unsigned long bounce_tick = 0;
-const PROGMEM uint16_t bricks[ brick_count ][4] = {
+const PROGMEM uint16_t bricks[][4] = {
   {
     0b0100010001000100,      //1x4 cyan
     0b0000000011110000,
@@ -125,10 +124,11 @@ const PROGMEM uint16_t bricks[ brick_count ][4] = {
     0b0000110001100000
   }
 };
+uint8_t brick_count = sizeof(bricks)/sizeof(bricks[0]);
 
 //8 bit RGB colors of blocks
 //RRRBBBGG
-const PROGMEM uint8_t brick_colors[brick_count]={
+const PROGMEM uint8_t brick_colors[]={
   0b00011111, //cyan
   0b10010000, //purple
   0b11100011, //yellow
@@ -224,6 +224,8 @@ void setup(){
 
   Serial.begin(115200); 
   Serial.println(F("Starting Arduino Tetris"));
+  Serial.print(F("Size of Bricks = "));
+  Serial.println(brick_count);
 
   strip.begin();
 
