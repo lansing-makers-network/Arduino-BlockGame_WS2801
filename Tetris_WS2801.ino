@@ -508,8 +508,9 @@ byte getCommand(){
 
   int x = chuck.readJoyX();
   int y = chuck.readJoyY();
-  if (chuck.buttonC) {
-    Serial.println(F("Button C pushed."));
+
+  if (chuck.buttonC && chuck.buttonZ) {
+    Serial.println(F("Both Button C & Z pushed."));
      useAi = !useAi;
      Serial.println(F("Toggling useAI mode"));
      if (useAi) {
@@ -521,10 +522,8 @@ byte getCommand(){
      }
      strip.show();
      delay(250);
-  }
- 
-  if (chuck.buttonZ){
-    Serial.println(F("Button Z pushed."));
+  } else if (chuck.buttonZ || chuck.buttonC){
+    Serial.println(F("Button Z or C pushed."));
     playerMove = UP;
   } else if ((x != -DEFAULT_ZERO_JOY_X) && (y != -DEFAULT_ZERO_JOY_Y)) {
     if (x > 75){
