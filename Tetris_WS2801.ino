@@ -28,6 +28,7 @@ LED is on pin 0
 RGB LEDS data is on pin 1
 */
 
+//#include <MemoryFree.h>;
 
 #include <Wire.h>
 #include <WiiChuck.h>
@@ -298,6 +299,7 @@ void play(){
 
 			// process the command
 			if ( command == UP ) {
+  			Serial.println(F("ROTATE 90"));
 				bounce_tick = millis() + bounce_delay*5;
 				if ( checkRotate( 1 ) == true ) {
 					rotate( 1 );
@@ -313,6 +315,7 @@ void play(){
 					shift( 1, 0 );
 				}
 			} else if ( command == DOWN ) {
+  			Serial.print(F("D"));
 				moveDown();
 			}
 		}
@@ -327,6 +330,7 @@ void play(){
 
 //performs AI player calculations. 
 void performAI(){
+  Serial.println(F("AI performed"));
   struct TBrick initialBrick;
   //save position of the brick in its raw state
   memcpy((void*)&initialBrick, (void*)&currentBrick, sizeof(TBrick));
@@ -555,6 +559,10 @@ byte getCommand(){
       Serial.println(F("Toggling useAI mode OFF!"));
       idleBricks = 0;
     } else {
+//      Serial.print(currentBrick.rotation); Serial.print(F("|"));
+//      Serial.print(aiCurrentMove.rotation); Serial.print(F("|"));
+//      Serial.print(currentBrick.positionX); Serial.print(F("|"));
+//      Serial.print(aiCurrentMove.positionX); Serial.print(F(" "));
       if(currentBrick.rotation != aiCurrentMove.rotation)
         playerMove = UP;
       if(currentBrick.positionX > aiCurrentMove.positionX)
@@ -564,6 +572,8 @@ byte getCommand(){
       if(currentBrick.positionX == aiCurrentMove.positionX)
         playerMove = DOWN;
     }
+//  } else {
+//    Serial.println("Problem in getcommand useAi");
   }
 
 
@@ -698,15 +708,36 @@ void rotate( bool direction )
 }
 
 void moveDown(){
+  Serial.print(F("."));
   if( checkGround() )
   {
+  	Serial.print(F("checkGround()"));
+  	Serial.print(F("bounce_tick = "));
+  	Serial.print(bounce_tick);
+  	Serial.print(F(" millis() = "));
+  	Serial.println(millis());
 
     addToWall();
+  	Serial.print(F("addToWall()"));
+  	Serial.print(F("bounce_tick = "));
+  	Serial.print(bounce_tick);
+  	Serial.print(F(" millis() = "));
+  	Serial.println(millis());
 
     drawGame();
+  	Serial.print(F("drawGame()"));
+  	Serial.print(F("bounce_tick = "));
+  	Serial.print(bounce_tick);
+  	Serial.print(F(" millis() = "));
+  	Serial.println(millis());
     
     if( checkCeiling() )
     {
+  	Serial.print(F("Ceiling Found"));
+  	Serial.print(F("bounce_tick = "));
+  	Serial.print(bounce_tick);
+  	Serial.print(F(" millis() = "));
+  	Serial.println(millis());
       gameOver();
     }
     else
@@ -826,6 +857,15 @@ bool clearLine()
 
 //randomly selects a new brick and resets rotation / position.
 void nextBrick(){
+  Serial.print(F("Next Brick"));
+  Serial.print(F(", useAI mode = ")); 
+  Serial.print(useAi); 
+  Serial.print(F(", idleBricks = ")); 
+  Serial.println(idleBricks); 
+	Serial.print(F("bounce_tick = "));
+	Serial.print(bounce_tick);
+	Serial.print(F(" millis() = "));
+	Serial.println(millis());
 
   if (!useAi) {
     idleBricks++;
@@ -982,6 +1022,13 @@ void draw(byte color, signed int brightness, byte x, byte y){
 //obvious function
 void gameOver()
 {
+  Serial.println(F("GAME Over"));
+//  Serial.println(F("Free RAM = ")); //F function does the same and is now a built in library, in IDE > 1.0.0
+//  Serial.println(freeMemory(), DEC);  // print how much RAM is available.
+  Serial.print(F("bounce_tick = "));
+  Serial.print(bounce_tick);
+  Serial.print(F(" millis() = "));
+  Serial.println(millis());
 
   int y;
   for ( y = 0; y < FIELD_HEIGHT; y++ ) {
@@ -1001,7 +1048,14 @@ void gameOver()
 //clean up, reset timers, scores, etc. and start a new round.
 void newGame()
 {
+  Serial.print(F("New GAME"));
+  Serial.print(F(", useAI mode = ")); 
+  Serial.println(useAi); 
+	Serial.print(F("bounce_tick = "));
+	Serial.print(bounce_tick);
 
+	Serial.print(F(" millis() = "));
+	Serial.println(millis());
   aiCalculatedAlready = false;
   //  level = 0;
   // ticks = 0;
@@ -1009,6 +1063,8 @@ void newGame()
   //score_lines = 0;
   //last_key = 0;
   bounce_tick = millis() + bounce_delay;
+  Serial.print(F("bounce_tick = "));
+  Serial.print(bounce_tick);
   clearWall();
 
   nextBrick();
