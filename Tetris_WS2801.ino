@@ -122,6 +122,12 @@ const PROGMEM uint16_t bricks[][4] = {
     0b0000110001100000,
     0b0000010011001000,
     0b0000110001100000
+  },
+  {
+    0b0000111010101110,      // doughnut
+    0b0000111010101110,
+    0b0000111010101110,
+    0b0000111010101110
   }
 };
 uint8_t brick_count = sizeof(bricks)/sizeof(bricks[0]);
@@ -135,7 +141,8 @@ const PROGMEM uint8_t brick_colors[]={
   0b11100001, //orange?
   0b00011100, //blue
   0b00000011, //green
-  0b11100000  //red
+  0b11100000, //red
+  0b11111111  //white
 };
 
 //You will need to modify this to translate fro x,y to a pixel number.
@@ -220,11 +227,18 @@ Adafruit_WS2801 strip = Adafruit_WS2801(LEDS);
 int idleBricks = 0;
 #define MAX_IDLEBRICKS 4
 
+int numberOfBricksInGame = 0;
+int addExtraBrickCount = 20;  // limit before adding last mystry brick
+
 void setup(){
 
   Serial.begin(115200); 
   Serial.println(F("Starting Arduino Tetris"));
-  Serial.print(F("Size of Bricks = "));
+  Serial.print(F("Numbers of Possible Bricks = "));
+  Serial.println(sizeof(bricks)/sizeof(bricks[0]));
+  brick_count = (sizeof(bricks)/sizeof(bricks[0])) - 1; 
+
+  Serial.print(F("Numbers of Bricks in Play = "));
   Serial.println(brick_count);
 
   strip.begin();
@@ -887,6 +901,13 @@ void nextBrick(){
 	Serial.print(bounce_tick);
 	Serial.print(F(" millis() = "));
 	Serial.println(millis());
+	numberOfBricksInGame++;
+	Serial.print(F("numberOfBricksInGame = "));
+	Serial.println(numberOfBricksInGame);
+	
+	if (numberOfBricksInGame > addExtraBrickCount) {
+          brick_count = sizeof(bricks)/sizeof(bricks[0]); 
+	}
 
   if (!useAi) {
     idleBricks++;
@@ -1031,7 +1052,7 @@ void draw(byte color, signed int brightness, byte x, byte y){
     b=color&0b00000011;
     g=(color&0b00011100)>>2;
     r=(color&0b11100000)>>5;
-    
+
     //make sure brightness value is correct
     brightness=constrain(brightness,0,FULL);
     
@@ -1069,6 +1090,7 @@ void gameOver()
 //clean up, reset timers, scores, etc. and start a new round.
 void newGame()
 {
+  numberOfBricksInGame = 0;
   Serial.print(F("New GAME"));
   Serial.print(F(", useAI mode = ")); 
   Serial.println(useAi); 
