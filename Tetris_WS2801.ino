@@ -51,10 +51,12 @@ RGB LEDS data is on pin 1
 #define    LEDS FIELD_HEIGHT * FIELD_WIDTH
 
 //constants and initialization
-#define UP  0
+#define COUNTERCLOCKWISE  0
 #define DOWN  1
 #define RIGHT  2
 #define LEFT  3
+#define CLOCKWISE 4
+#define NUMBEROFMOVES 5
 #define brick_count 7
 
 #define FULL 128
@@ -298,11 +300,17 @@ void play(){
 				ct = 0;
 
 			// process the command
-			if ( command == UP ) {
+			if ( command == COUNTERCLOCKWISE ) {
   			Serial.println(F("ROTATE 90"));
 				bounce_tick = millis() + bounce_delay*5;
 				if ( checkRotate( 1 ) == true ) {
 					rotate( 1 );
+				}
+			} else if ( command == CLOCKWISE ) {
+  			Serial.println(F("ROTATE -90"));
+				bounce_tick = millis() + bounce_delay*5;
+				if ( checkRotate( 0 ) == true ) {
+					rotate( 0 );
 				}
 			} else if ( command == RIGHT ) {
 				if ( checkShift( -1, 0 ) == true ) {
@@ -498,7 +506,7 @@ bool getFullLinePossible()
 byte getCommand(){
   /*
   if(currentBrick.rotation != aiCurrentMove.rotation)
-    return UP;
+    return COUNTERCLOCKWISE;
   if(currentBrick.positionX > aiCurrentMove.positionX)
     return LEFT;
   if(currentBrick.positionX < aiCurrentMove.positionX)
@@ -507,7 +515,7 @@ byte getCommand(){
     return DOWN;
     */
     
-  byte playerMove = 4;
+  byte playerMove = NUMBEROFMOVES;
   chuck.update(); 
 
   int x = chuck.readJoyX();
@@ -526,9 +534,12 @@ byte getCommand(){
      }
      strip.show();
      delay(250);
-  } else if (chuck.buttonZ || chuck.buttonC){
-    Serial.println(F("Button Z or C pushed."));
-    playerMove = UP;
+  } else if (chuck.buttonZ){
+    Serial.println(F("Button Z pushed."));
+    playerMove = COUNTERCLOCKWISE;
+  } else if (chuck.buttonC){
+    Serial.println(F("Button C pushed."));
+    playerMove = CLOCKWISE;
   } else if ((x != -DEFAULT_ZERO_JOY_X) && (y != -DEFAULT_ZERO_JOY_Y)) {
     if (x > 75){
       Serial.print(F("RIGHT: Joy X > 75.("));
@@ -548,13 +559,13 @@ byte getCommand(){
     }
   }
 
-  if (playerMove < 4) {
+  if (playerMove < NUMBEROFMOVES) {
     idleBricks = 0;
     Serial.println(F("resetting the idle manual brick count to zero"));
   }
   
   if (useAi){
-    if (playerMove < 4) {
+    if (playerMove < NUMBEROFMOVES) {
       useAi = !useAi;
       Serial.println(F("Toggling useAI mode OFF!"));
       idleBricks = 0;
@@ -564,7 +575,7 @@ byte getCommand(){
 //      Serial.print(currentBrick.positionX); Serial.print(F("|"));
 //      Serial.print(aiCurrentMove.positionX); Serial.print(F(" "));
       if(currentBrick.rotation != aiCurrentMove.rotation)
-        playerMove = UP;
+        playerMove = COUNTERCLOCKWISE;
       if(currentBrick.positionX > aiCurrentMove.positionX)
         playerMove = RIGHT;
       if(currentBrick.positionX < aiCurrentMove.positionX)
@@ -711,33 +722,41 @@ void moveDown(){
   Serial.print(F("."));
   if( checkGround() )
   {
+    #ifdef DEGUB
   	Serial.print(F("checkGround()"));
   	Serial.print(F("bounce_tick = "));
   	Serial.print(bounce_tick);
   	Serial.print(F(" millis() = "));
   	Serial.println(millis());
+  	#endif
 
     addToWall();
+    #ifdef DEGUB
   	Serial.print(F("addToWall()"));
   	Serial.print(F("bounce_tick = "));
   	Serial.print(bounce_tick);
   	Serial.print(F(" millis() = "));
   	Serial.println(millis());
+  	#endif
 
     drawGame();
+    #ifdef DEGUB
   	Serial.print(F("drawGame()"));
   	Serial.print(F("bounce_tick = "));
   	Serial.print(bounce_tick);
   	Serial.print(F(" millis() = "));
   	Serial.println(millis());
+  	#endif
     
     if( checkCeiling() )
     {
+    #ifdef DEGUB
   	Serial.print(F("Ceiling Found"));
   	Serial.print(F("bounce_tick = "));
   	Serial.print(bounce_tick);
   	Serial.print(F(" millis() = "));
   	Serial.println(millis());
+  	#endif
       gameOver();
     }
     else
