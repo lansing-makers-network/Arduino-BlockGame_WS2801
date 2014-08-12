@@ -128,9 +128,16 @@ const PROGMEM uint16_t bricks[][4] = {
     0b0000111010101110,
     0b0000111010101110,
     0b0000111010101110
+  },
+  {
+    0b0000101001001010,      // X
+    0b0000101001001010,
+    0b0000101001001010,
+    0b0000101001001010,
   }
 };
 uint8_t brick_count = sizeof(bricks)/sizeof(bricks[0]);
+#define EXTRABRICKS 2
 
 //8 bit RGB colors of blocks
 //RRRBBBGG
@@ -142,7 +149,8 @@ const PROGMEM uint8_t brick_colors[]={
   0b00011100, //blue
   0b00000011, //green
   0b11100000, //red
-  0b11111111  //white
+  0b11100111, //pale yellow
+  0b01011001, //pale purple
 };
 
 //You will need to modify this to translate fro x,y to a pixel number.
@@ -227,6 +235,7 @@ Adafruit_WS2801 strip = Adafruit_WS2801(LEDS);
 int idleBricks = 0;
 #define MAX_IDLEBRICKS 4
 
+int numberOfBricksSinceAI = 0;
 int numberOfBricksInGame = 0;
 int addExtraBrickCount = 20;  // limit before adding last mystry brick
 
@@ -236,7 +245,7 @@ void setup(){
   Serial.println(F("Starting Arduino Tetris"));
   Serial.print(F("Numbers of Possible Bricks = "));
   Serial.println(sizeof(bricks)/sizeof(bricks[0]));
-  brick_count = (sizeof(bricks)/sizeof(bricks[0])) - 1; 
+  brick_count = (sizeof(bricks)/sizeof(bricks[0])) - EXTRABRICKS; 
 
   Serial.print(F("Numbers of Bricks in Play = "));
   Serial.println(brick_count);
@@ -897,20 +906,34 @@ void nextBrick(){
   Serial.print(useAi); 
   Serial.print(F(", idleBricks = ")); 
   Serial.println(idleBricks); 
-	Serial.print(F("bounce_tick = "));
-	Serial.print(bounce_tick);
-	Serial.print(F(" millis() = "));
-	Serial.println(millis());
-	numberOfBricksInGame++;
-	Serial.print(F("numberOfBricksInGame = "));
-	Serial.println(numberOfBricksInGame);
-	
-	if ((numberOfBricksInGame > addExtraBrickCount) && !useAi) {
-    brick_count = sizeof(bricks)/sizeof(bricks[0]); 
-	} else {
-    brick_count = sizeof(bricks)/sizeof(bricks[0]) - 1; 
-	}
+  Serial.print(F("bounce_tick = "));
+  Serial.print(bounce_tick);
+  Serial.print(F(" millis() = "));
+  Serial.println(millis());
 
+  numberOfBricksInGame++;
+  Serial.print(F("numberOfBricksInGame = "));
+  Serial.println(numberOfBricksInGame);
+
+  if (!useAi) {
+    numberOfBricksSinceAI++;
+    if (numberOfBricksSinceAI > (addExtraBrickCount * 1.5)) {
+      brick_count = sizeof(bricks)/sizeof(bricks[0]); 
+    } else if (numberOfBricksSinceAI > addExtraBrickCount) {
+      brick_count = sizeof(bricks)/sizeof(bricks[0])  - (EXTRABRICKS / 2); 
+    } else {
+      brick_count = (sizeof(bricks)/sizeof(bricks[0])) - EXTRABRICKS; 
+    }
+  } else {
+    numberOfBricksSinceAI = 0;
+    brick_count = (sizeof(bricks)/sizeof(bricks[0])) - EXTRABRICKS; 
+  }
+  Serial.print(F("numberOfBricksSinceAI = "));
+  Serial.println(numberOfBricksSinceAI);
+
+  Serial.print(F("Numbers of Bricks in Play = "));
+  Serial.println(brick_count);
+	
   if (!useAi) {
     idleBricks++;
     if (idleBricks > MAX_IDLEBRICKS) {
@@ -927,6 +950,7 @@ void nextBrick(){
   currentBrick.rotation = 0;
   currentBrick.positionX = round(FIELD_WIDTH / 2) - 2;
   currentBrick.positionY = -3;
+
 
   currentBrick.type = random( 0, brick_count );
 
