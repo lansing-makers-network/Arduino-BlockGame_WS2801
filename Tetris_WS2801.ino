@@ -50,6 +50,8 @@ RGB LEDS data is on pin 1
 #define    FIELD_HEIGHT 20
 #define    LEDS FIELD_HEIGHT * FIELD_WIDTH
 
+#define    NUMBEROFRBGLEDSATEND 3 // normal LED's are RGB not RBG!
+
 //constants and initialization
 #define COUNTERCLOCKWISE  0
 #define DOWN  1
@@ -1053,7 +1055,7 @@ void draw(byte color, signed int brightness, byte x, byte y){
     //make sure brightness value is correct
     brightness=constrain(brightness,0,FULL);
     
-    strip.setPixelColor(address, map(r,0,7,0,brightness), map(g,0,7,0,brightness), map(b,0,3,0,brightness));
+    Fixed_setPixelColor(address, map(r,0,7,0,brightness), map(g,0,7,0,brightness), map(b,0,3,0,brightness));
 
   }
   
@@ -1082,11 +1084,11 @@ void draw(byte color, signed int brightness, byte x, byte y){
     //make sure brightness value is correct
     brightness=constrain(brightness,0,FULL);
     
-    strip.setPixelColor(address, map(r,0,7,0,brightness), map(g,0,7,0,brightness), map(b,0,3,0,brightness));
+    Fixed_setPixelColor(address, map(r,0,7,0,brightness), map(g,0,7,0,brightness), map(b,0,3,0,brightness));
 
   }
   
-}
+}  
 //obvious function
 void gameOver()
 {
@@ -1158,7 +1160,7 @@ uint32_t Color(byte r, byte g, byte b) {
 void colorGrid(uint32_t color) {
 	int i;
 	for (i=0; i < strip.numPixels(); i++) {
-		strip.setPixelColor(i, color);
+		Fixed_setPixelColor(i, (uint8_t *) &color);
 	}
 }
 
@@ -1166,7 +1168,7 @@ void colorRow(uint32_t color, int row) {
 	int x;
 
 	for ( x = 0; x < FIELD_WIDTH; x++ ) {
-		strip.setPixelColor(computeAddress(row, x), color);
+		Fixed_setPixelColor(computeAddress(row, x), (uint8_t *)  &color);
 	}
 }
 
@@ -1198,4 +1200,29 @@ void dissolveGrid(uint16_t pause, uint16_t steps) {
 		strip.show();
 		delay(pause);
 	}
+}
+
+// Pixel LED's on End may not be RGB, but rather RBG.
+void Fixed_setPixelColor(uint16_t n, uint8_t r, uint8_t g, uint8_t b) {
+  if (n > strip.numPixels() - NUMBEROFRBGLEDSATEND) {
+    strip.setPixelColor(n, r, b, g);
+  } else {
+    strip.setPixelColor(n, r, g, b);
+  }
+}
+
+void Fixed_setPixelColor(uint16_t n, uint8_t *c) {
+  union fourbyte {
+    uint32_t lword;
+    uint8_t  byte[4];
+  } d;
+
+   if (n > strip.numPixels() - NUMBEROFRBGLEDSATEND - 1) {
+     d.byte[2] = c[2]; // Red
+     d.byte[1] = c[0]; // Blue
+     d.byte[0] = c[1]; // Green
+     strip.setPixelColor(n, d.lword);
+   } else {
+     strip.setPixelColor(n, *(uint32_t *) c);
+   }
 }
