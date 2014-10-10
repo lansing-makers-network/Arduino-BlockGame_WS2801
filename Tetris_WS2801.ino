@@ -1204,7 +1204,7 @@ void dissolveGrid(uint16_t pause, uint16_t steps) {
 
 // Pixel LED's on End may not be RGB, but rather RBG.
 void Fixed_setPixelColor(uint16_t n, uint8_t r, uint8_t g, uint8_t b) {
-  if (n > strip.numPixels() - NUMBEROFRBGLEDSATEND) {
+  if (n > strip.numPixels() - NUMBEROFRBGLEDSATEND - 1) {
     strip.setPixelColor(n, r, b, g);
   } else {
     strip.setPixelColor(n, r, g, b);
