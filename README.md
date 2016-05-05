@@ -1,4 +1,4 @@
-Tetris on WS2801 Strips
+Block Game on WS2801 Strips
 -----------------------
 
 Required Libraries:

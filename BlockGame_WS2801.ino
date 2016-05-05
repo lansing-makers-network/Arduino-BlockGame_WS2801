@@ -1,25 +1,26 @@
 /*
-*
-* BASED ON:
-*
-*
-* LEDTetrisNeckTie.c
-*
-* Created: 6/21/2013 
-*  Author: Bill Porter
-*    www.billporter.info
-*
-*   AI player code by: Mofidul Jamal
-*
-*    Code to run a wicked cool LED Tetris playing neck tie. Details:              
-*         http://www.billporter.info/2013/06/21/led-tetris-tie/
-*
-*This work is licensed under the Creative Commons Attribution-ShareAlike 3.0 Unported License.
-*To view a copy of this license, visit http://creativecommons.org/licenses/by-sa/3.0/ or
-*send a letter to Creative Commons, 444 Castro Street, Suite 900, Mountain View, California, 94041, USA.
-*
-*/ 
+\file  BlockGame_WS2801.ino
+\brief  Arduino sketch to run a Block Playing Game using a string of WS2801 RGB leds.
+\remarks  comments are implemented with Doxygen Markdown format
 
+\section  Contributors Contributors
+\author  Michael Flaga, www.flaga.net
+\author  Brian Adams, www.lansingmakersnetwork.org
+\author  Bill Porter, www.billporter.info
+\author  Mofidul Jamal
+
+\section  References References
+\see
+- Software
+ - <A HREF = "https://github.com/adafruit/Adafruit-WS2801-Library"> WS2801 Library</A>.
+ - <A HREF = "http://playground.arduino.cc//Main/WiiChuckClass?action=sourceblock&num=3"> Wii Nunchuck Library</A>.
+- Hardware
+ - a lot of WS2801
+ 	- due to the larger number of the strings length the WS2801 is preferable over that of the WS2811, in that the WS2801 has the clock.
+ - Note this time the WiiChuckClass will only compile on an Arduino UNO or Mega, but not Micro/Leonardo.
+
+\licence  This work is licensed under the Creative Commons Attribution-ShareAlike 3.0 Unported License. To view a copy of this license, visit http://creativecommons.org/licenses/by-sa/3.0/ or send a letter to Creative Commons, 444 Castro Street, Suite 900, Mountain View, California, 94041, USA.
+*/ 
 
 
 /* Notes
@@ -244,7 +245,7 @@ int addExtraBrickCount = 20;  // limit before adding last mystry brick
 void setup(){
 
   Serial.begin(115200); 
-  Serial.println(F("Starting Arduino Tetris"));
+  Serial.println(F("Starting Arduino BlockGame"));
   Serial.print(F("Numbers of Possible Bricks = "));
   Serial.println(sizeof(bricks)/sizeof(bricks[0]));
   brick_count = (sizeof(bricks)/sizeof(bricks[0])) - EXTRABRICKS; 
