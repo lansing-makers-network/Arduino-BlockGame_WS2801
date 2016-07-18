@@ -1105,8 +1105,8 @@ void gameOver()
 	  strip.show();
 	  delay(80);
   }
-  fadeGrid(Color(255, 0, 0), Color(255,255,255),0, 100);
-  fadeGrid(Color(255,255,255), Color(0,0,0), 8, 200);
+  fadeGrid(Color(255, 0, 0), Color(255*.75,255*.75,255*.75),0, 100);
+  fadeGrid(Color(255*.75,255*.75,255*.75), Color(0,0,0), 8, 200);
   delay(1500);
   //dissolveGrid(5, 250);
 
