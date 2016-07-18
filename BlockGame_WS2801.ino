@@ -571,12 +571,12 @@ byte getCommand(){
       Serial.print(F("RIGHT: Joy X > 75.("));
       Serial.print(x);
       Serial.println(F(")"));
-      playerMove = RIGHT;
+      playerMove = LEFT;
     } else if (x < -75){
       Serial.print(F("LEFT: Joy X < -75.("));
       Serial.print(x);
       Serial.println(F(")"));
-      playerMove = LEFT;
+      playerMove = RIGHT;
     } else if ( y < -75 ){
       Serial.print(F("DOWN: Joy Y < -75.("));
       Serial.print(y);
