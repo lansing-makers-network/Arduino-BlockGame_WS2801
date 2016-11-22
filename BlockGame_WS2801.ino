@@ -9,78 +9,75 @@
 \author  Bill Porter, www.billporter.info
 \author  Mofidul Jamal
 
+\licence  This work is licensed under the Creative Commons Attribution-ShareAlike 3.0 Unported License. To view a copy of this license, visit http://creativecommons.org/licenses/by-sa/3.0/ or send a letter to Creative Commons, 444 Castro Street, Suite 900, Mountain View, California, 94041, USA.
+
 \section  References References
 \see
 - Software
  - <A HREF = "https://github.com/adafruit/Adafruit-WS2801-Library"> WS2801 Library</A>.
+ - <A HREF = "https://github.com/adafruit/Adafruit_NeoPixel"> Adafruit_NeoPixel Library</A>.
  - <A HREF = "http://playground.arduino.cc//Main/WiiChuckClass?action=sourceblock&num=3"> Wii Nunchuck Library</A>.
 - Hardware
- - a lot of WS2801
- 	- due to the larger number of the strings length the WS2801 is preferable over that of the WS2811, in that the WS2801 has the clock.
- - Note this time the WiiChuckClass will only compile on an Arduino UNO or Mega, but not Micro/Leonardo.
-
-\licence  This work is licensed under the Creative Commons Attribution-ShareAlike 3.0 Unported License. To view a copy of this license, visit http://creativecommons.org/licenses/by-sa/3.0/ or send a letter to Creative Commons, 444 Castro Street, Suite 900, Mountain View, California, 94041, USA.
-*/ 
-
-
-/* Notes
-Analog 2 is pin 2
-LED is on pin 0
-RGB LEDS data is on pin 1
+ - a Arduino
+ - a lot of either WS2801 or WS2811/WS2812s
+ - Wii Chuck
+ - <A HREF = https://www.sparkfun.com/products/9281"> WiiChuck Adapter - DEV-09281</A>.
+ 
+\Note
+ - due to the larger number of the strings length the WS2801 is preferable over that of the WS2811, in that the WS2801 has the clock.
+   and WS2801 can be purchased to run off of 12 Volts, lowering the supply amperage.
+ - Note at this time the WiiChuckClass will only compile on an Arduino UNO or Mega, but not Micro/Leonardo.
 */
 
-//#include <MemoryFree.h>;
+// Hardware Specific Constants
 
+// Type of RGB:
+#define NEOPIXEL // comment out if WS2801
+//#define LEDCLKPIN 13 // if WS2801 (not NeoPixel) and commented out then Hardware SPI will be used.
+#define LEDDATAPIN 11 // Pin of RGB data if not SPI, otherwise dont care.
+
+// Panel Description:
+//#define BOTTOM_LEFT // comment if first pixel is bottom left, otherwise it is bottom right.
+//#define VERT_STRIPS // comment out if Horiztonal Rows otherwise Veritical Colomuns.
+#define PROGRESSIVE // Comment out if stripes are zigzag .
+#define FIELD_WIDTH 8 // Horizontal Width.
+#define FIELD_HEIGHT 24 // Veritical Heigth.
+#define LEDS FIELD_HEIGHT * FIELD_WIDTH
+
+// Operational Constants:
+#define FULL_INTENSITY 16 // 0 to 255 where lower values are dimmed to run off of smaller power supplies, good for testing.
+#define MAX_IDLEBRICKS 4 //Number of Moves without user input, before Idle
+#define TICK_DELAY 400 //game speed, millseconds between screen updates.
+#define BOUNCE_DELAY 50 //weight given to the highest column for ai
+#define HIGH_COLUMN_WEIGHT 5 //weight given to the number of holes for ai
+#define HOLE_WEIGHT 3
+#define ADD_EXTRA_BRICK_COUNT 20 // limit before adding last mystry brick
+
+#ifdef NEOPIXEL
+#include <Adafruit_NeoPixel.h>
+#else // NEOPIXEL
+#include <SPI.h>
+#include <Adafruit_WS2801.h>
+#endif // NEOPIXEL
+
+#include <avr/io.h>
+#include <avr/pgmspace.h>
 #include <Wire.h>
 #include <WiiChuck.h>
 
-//#include <Adafruit_NeoPixel.h>
-#include <SPI.h>
-#include <Adafruit_WS2801.h>
-#include <avr/io.h>
-#include <avr/pgmspace.h>
-
-//Constants for LED strip.  Hardware SPI can be used by commenting out these defines.
-//#define LEDDATAPIN 2
-//#define LEDCLKPIN 3
-
-//Strips are assumed to be zig-zagged horizontally by default. Uncomment VERT_STRIPS to reverse this behavior
-//#define VERT_STRIPS
-
-#define    FIELD_WIDTH 10
-#define    FIELD_HEIGHT 20
-#define    LEDS FIELD_HEIGHT * FIELD_WIDTH
-
-//constants and initialization
+//Interpreted WII Chuck response values
 #define COUNTERCLOCKWISE  0
 #define DOWN  1
 #define RIGHT  2
 #define LEFT  3
 #define CLOCKWISE 4
-#define NUMBEROFMOVES 5
-
-#define FULL 128
-#define WHITE 0xFF
-#define OFF 0
-
-//Display Settings
-//const short    field_start_x    = 1;
-//const short    field_start_y    = 1;
-//const short           preview_start_x    = 13;
-//const short    preview_start_y    = 1;
-//const short    delimeter_x      = 11;
-//gameplay Settings
-//const bool    display_preview    = 1;
-#define tick_delay 400 //game speed
-#define max_level 9
-#define bounce_delay 50
-//weight given to the highest column for ai
-#define HIGH_COLUMN_WEIGHT 5
-//weight given to the number of holes for ai
-#define HOLE_WEIGHT 3
+#define NUMBEROFMOVES 5 // Idle/No input from WII Chuck
 
 unsigned long  next_tick = 0;
 unsigned long bounce_tick = 0;
+
+// Block Descriptions, Each brick consists of 4 patterns one for of each rotation, 
+// where each uint16_t pattern is 4 nibbles that stack to create the 4x4 block.
 const PROGMEM uint16_t bricks[][4] = {
   {
     0b0100010001000100,      //1x4 cyan
@@ -124,6 +121,7 @@ const PROGMEM uint16_t bricks[][4] = {
     0b0000010011001000,
     0b0000110001100000
   },
+#define EXTRABRICKS 2 // The Two Non-Cannon Bricks are easter egg or deterents. 
   {
     0b0000111010101110,      // doughnut
     0b0000111010101110,
@@ -138,7 +136,7 @@ const PROGMEM uint16_t bricks[][4] = {
   }
 };
 uint8_t brick_count = sizeof(bricks)/sizeof(bricks[0]);
-#define EXTRABRICKS 2
+
 
 //8 bit RGB colors of blocks
 //RRRBBBGG
@@ -158,42 +156,31 @@ const PROGMEM uint8_t brick_colors[]={
 uint16_t computeAddress(int row, int col){
 	uint16_t reversed = 0;
 #ifdef VERT_STRIPS
+#ifndef PROGRESSIVE
 	if (col%2 == 0) {
 		reversed = 1;
 	}
-	uint16_t base = (col)*FIELD_HEIGHT;
+#endif // PROGRESSIVE
+uint16_t base = (col)*FIELD_HEIGHT;
 	if (reversed) {
 		base += FIELD_HEIGHT - 1;
 	}
 	uint16_t final = reverse == 1? base - row: base + row;
 	}
-#else
+#else // VERT_STRIPS
+#ifndef PROGRESSIVE
 	if (row%2 == 0){
 		reversed = 1;
 	}
+#endif // PROGRESSIVE
 	uint16_t base = (row)*FIELD_WIDTH;
 	if (reversed) {
 		base += FIELD_WIDTH -1;
 	}
 	uint16_t final = reversed == 1 ? base - col: base + col;
-#endif
+#endif // VERT_STRIPS
 	return final;
 }
-
-/*const unsigned short level_ticks_timeout[ max_level ]  = {
-32,
-28,
-24,
-20,
-17,
-13,
-10,
-8,
-5
-};*/
-//const unsigned int score_per_level          = 10; //per brick in lv 1+
-//const unsigned int score_per_line          = 300;
-
 
 byte wall[FIELD_WIDTH][FIELD_HEIGHT];
 //The 'wall' is the 2D array that holds all bricks that have already 'fallen' into place
@@ -226,19 +213,20 @@ WiiChuck chuck = WiiChuck();
 
 
 // Define the RGB pixel array and controller functions, 
-//Adafruit_NeoPixel strip = Adafruit_NeoPixel(LEDS, LEDDATAPIN, NEO_GRB + NEO_KHZ800);
+#ifdef NEOPIXEL
+Adafruit_NeoPixel strip = Adafruit_NeoPixel(LEDS, LEDDATAPIN, NEO_GRB + NEO_KHZ800);
+#else // NEOPIXEL
 #ifdef LEDCLKPIN
 Adafruit_WS2801 strip = Adafruit_WS2801(LEDS, LEDDATAPIN, LEDCLKPIN);
-#else
+#else // LEDCLKPIN
 Adafruit_WS2801 strip = Adafruit_WS2801(LEDS);
-#endif
+#endif // LEDCLKPIN
+#endif // NEOPIXEL
 
 int idleBricks = 0;
-#define MAX_IDLEBRICKS 4
 
 int numberOfBricksSinceAI = 0;
 int numberOfBricksInGame = 0;
-int addExtraBrickCount = 20;  // limit before adding last mystry brick
 
 void setup(){
 
@@ -256,13 +244,13 @@ void setup(){
   //Pre-Operating Self Test of LED grid.
   Serial.println(F("Starting Pre Operating Self Test"));
   Serial.println(F("fade to Red"));
-  fadeGrid(Color(0,0,0), Color(255,0,0), 8, 50);   // fade from off to Red
+  fadeGrid(Color(0,0,0), Color(FULL_INTENSITY,0,0), 8, 50);   // fade from off to Red
   Serial.println(F("fade to Green"));
-  fadeGrid(Color(255,0,0), Color(0,255,0), 8, 50); // fade from Red to Green
+  fadeGrid(Color(FULL_INTENSITY,0,0), Color(0,FULL_INTENSITY,0), 8, 50); // fade from Red to Green
   Serial.println(F("fade to Blue"));
-  fadeGrid(Color(0,255,0), Color(0,0,255), 8, 50); // fade from Green to Blue
+  fadeGrid(Color(0,FULL_INTENSITY,0), Color(0,0,FULL_INTENSITY), 8, 50); // fade from Green to Blue
   Serial.println(F("fade to off"));
-  fadeGrid(Color(0,0,255), Color(0,0,0), 8, 50);   // fade from Blue to Off
+  fadeGrid(Color(0,0,FULL_INTENSITY), Color(0,0,0), 8, 50);   // fade from Blue to Off
   Serial.println(F("Pre Operating Self Test Finished"));
 
   Serial.print(F("useAI mode = ")); 
@@ -308,7 +296,7 @@ void play(){
 		byte command = getCommand();
 
 		if ( command != 4 ) {
-			bounce_tick = millis() + bounce_delay;
+			bounce_tick = millis() + BOUNCE_DELAY;
 		}
 		/* To account for an oversensitive thumbstick,
 		   we want to introduce a timer that prevents
@@ -328,13 +316,13 @@ void play(){
 			// process the command
 			if ( command == COUNTERCLOCKWISE ) {
   			Serial.println(F("ROTATE 90"));
-				bounce_tick = millis() + bounce_delay*5;
+				bounce_tick = millis() + BOUNCE_DELAY*5;
 				if ( checkRotate( 1 ) == true ) {
 					rotate( 1 );
 				}
 			} else if ( command == CLOCKWISE ) {
   			Serial.println(F("ROTATE -90"));
-				bounce_tick = millis() + bounce_delay*5;
+				bounce_tick = millis() + BOUNCE_DELAY*5;
 				if ( checkRotate( 0 ) == true ) {
 					rotate( 0 );
 				}
@@ -355,7 +343,7 @@ void play(){
 		}
 	}
 	if ( millis() > next_tick ) {
-		next_tick = millis()+tick_delay;
+		next_tick = millis()+TICK_DELAY;
 		moveDown();
 	}
 	drawGame();
@@ -552,10 +540,10 @@ byte getCommand(){
      useAi = !useAi;
      Serial.println(F("Toggling useAI mode"));
      if (useAi) {
-    	 colorGrid(Color(255, 0, 0));
+    	 colorGrid(Color(FULL_INTENSITY, 0, 0));
        Serial.println(F("useAI mode enabled"));
      } else {
-    	 colorGrid(Color(0, 255, 0));
+    	 colorGrid(Color(0, FULL_INTENSITY, 0));
        Serial.println(F("useAI mode disabled"));
      }
      strip.show();
@@ -571,12 +559,20 @@ byte getCommand(){
       Serial.print(F("RIGHT: Joy X > 75.("));
       Serial.print(x);
       Serial.println(F(")"));
+#ifdef BOTTOM_LEFT
       playerMove = LEFT;
+#else // BOTTOM_LEFT
+      playerMove = RIGHT;
+#endif // BOTTOM_LEFT
     } else if (x < -75){
       Serial.print(F("LEFT: Joy X < -75.("));
       Serial.print(x);
       Serial.println(F(")"));
+#ifdef BOTTOM_LEFT
       playerMove = RIGHT;
+#else // BOTTOM_LEFT
+      playerMove = LEFT;
+#endif // BOTTOM_LEFT
     } else if ( y < -75 ){
       Serial.print(F("DOWN: Joy Y < -75.("));
       Serial.print(y);
@@ -918,9 +914,9 @@ void nextBrick(){
 
   if (!useAi) {
     numberOfBricksSinceAI++;
-    if (numberOfBricksSinceAI > (addExtraBrickCount * 1.5)) {
+    if (numberOfBricksSinceAI > (ADD_EXTRA_BRICK_COUNT * 1.5)) {
       brick_count = sizeof(bricks)/sizeof(bricks[0]); 
-    } else if (numberOfBricksSinceAI > addExtraBrickCount) {
+    } else if (numberOfBricksSinceAI > ADD_EXTRA_BRICK_COUNT) {
       brick_count = sizeof(bricks)/sizeof(bricks[0])  - (EXTRABRICKS / 2); 
     } else {
       brick_count = (sizeof(bricks)/sizeof(bricks[0])) - EXTRABRICKS; 
@@ -992,7 +988,7 @@ void drawWall(){
   for(int j=0; j < FIELD_WIDTH; j++){
     for(int k = 0; k < FIELD_HEIGHT; k++ )
     {
-      draw(wall[j][k],FULL,j,k);
+      draw(wall[j][k],FULL_INTENSITY,j,k);
     }
     
   }
@@ -1015,7 +1011,7 @@ void drawGame()
       {
         if( currentBrick.positionY + k >= 0 )
         {
-          draw(currentBrick.color, FULL, currentBrick.positionX + j, currentBrick.positionY + k);
+          draw(currentBrick.color, FULL_INTENSITY, currentBrick.positionX + j, currentBrick.positionY + k);
           //field[ positionX + j ][ p osition_y + k ] = currentBrick_color;
         }
       }
@@ -1052,7 +1048,7 @@ void draw(byte color, signed int brightness, byte x, byte y){
     r=(color&0b11100000)>>5;
     
     //make sure brightness value is correct
-    brightness=constrain(brightness,0,FULL);
+    brightness=constrain(brightness,0,FULL_INTENSITY);
     
     strip.setPixelColor(address, map(r,0,7,0,brightness), map(g,0,7,0,brightness), map(b,0,3,0,brightness));
 
@@ -1081,7 +1077,7 @@ void draw(byte color, signed int brightness, byte x, byte y){
     r=(color&0b11100000)>>5;
 
     //make sure brightness value is correct
-    brightness=constrain(brightness,0,FULL);
+    brightness=constrain(brightness,0,FULL_INTENSITY);
     
     strip.setPixelColor(address, map(r,0,7,0,brightness), map(g,0,7,0,brightness), map(b,0,3,0,brightness));
 
@@ -1101,12 +1097,12 @@ void gameOver()
 
   int y;
   for ( y = 0; y < FIELD_HEIGHT; y++ ) {
-	  colorRow(Color(255, 0, 0), y);
+	  colorRow(Color(FULL_INTENSITY, 0, 0), y);
 	  strip.show();
 	  delay(80);
   }
-  fadeGrid(Color(255, 0, 0), Color(255*.75,255*.75,255*.75),0, 100);
-  fadeGrid(Color(255*.75,255*.75,255*.75), Color(0,0,0), 8, 200);
+  fadeGrid(Color(FULL_INTENSITY, 0, 0), Color(FULL_INTENSITY,FULL_INTENSITY,FULL_INTENSITY),0, 100);
+  fadeGrid(Color(FULL_INTENSITY,FULL_INTENSITY,FULL_INTENSITY), Color(0,0,0), 8, 200);
   delay(1500);
   //dissolveGrid(5, 250);
 
@@ -1132,7 +1128,7 @@ void newGame()
   //score = 0;
   //score_lines = 0;
   //last_key = 0;
-  bounce_tick = millis() + bounce_delay;
+  bounce_tick = millis() + BOUNCE_DELAY;
   Serial.print(F("bounce_tick = "));
   Serial.print(bounce_tick);
   clearWall();
